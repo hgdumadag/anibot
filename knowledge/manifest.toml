@@ -1,0 +1,121 @@
+version = 1
+
+[[documents]]
+id = "pns_bafs_141_2019_rice_gap"
+filename = "PNS-BAFS 141-2019 - Rice GÇö Code of Practice GÇö Good Agricultural Practices.pdf"
+title = "PNS/BAFS 141:2019 - Good Agricultural Practices for Rice"
+source_agency = "Bureau of Agriculture and Fisheries Standards"
+document_type = "pns_gap"
+year = 2019
+crops = ["rice"]
+advisory_tier = "reviewed_advisory"
+allowed_use = "advisory_evidence"
+reviewed = true
+
+[[documents]]
+id = "pns_bafs_42_2019_organic_milled_rice_gap"
+filename = "PNS-BAFS 42-2019 - Organic milled rice GÇö Code of Practice GÇö Good Agricultural Practices.pdf"
+title = "PNS/BAFS 42:2019 - Organic Milled Rice Code of Practice"
+source_agency = "Bureau of Agriculture and Fisheries Standards"
+document_type = "pns_code_of_practice"
+year = 2019
+crops = ["rice"]
+advisory_tier = "reviewed_advisory"
+allowed_use = "advisory_evidence"
+reviewed = true
+
+[[documents]]
+id = "pns_bafs_319_2021_traditional_rice_organic"
+filename = "PNS-BAFS 319-2021 - Organic Agriculture Production of Traditional Rice Varieties GÇö Code of Practice.pdf"
+title = "PNS/BAFS 319:2021 - Organic Agriculture Production of Traditional Rice Varieties"
+source_agency = "Bureau of Agriculture and Fisheries Standards"
+document_type = "pns_code_of_practice"
+year = 2021
+crops = ["rice"]
+advisory_tier = "reviewed_advisory"
+allowed_use = "advisory_evidence"
+reviewed = true
+
+[[documents]]
+id = "pagasa_monthly_agroclimatic_2026_03"
+filename = "monthly_agroclimatic.pdf"
+title = "PAGASA Monthly Philippine Agroclimatic Review and Outlook - March 2026"
+source_agency = "PAGASA"
+document_type = "agroclimatic_review"
+year = 2026
+crops = ["all"]
+advisory_tier = "context_reference"
+allowed_use = "context_only"
+reviewed = true
+
+[[documents]]
+id = "bswm_map_guidebook_2024"
+filename = "BSWM-MAP-GUIDEBOOK-A-guide-to-BSWM-Map-Standards-and-Symbols.pdf"
+title = "BSWM Map Guidebook - Map Standards and Symbols"
+source_agency = "Bureau of Soils and Water Management"
+document_type = "map_guidebook"
+year = 2024
+crops = ["all"]
+advisory_tier = "context_reference"
+allowed_use = "context_only"
+reviewed = true
+
+[[documents]]
+id = "pns_bafs_20_2018_corn_gap"
+filename = "PNS-BAFS 20-2018 - Corn GÇö Code of Practice GÇö Good of Agricultural Practices (GAP) 1.pdf"
+title = "PNS/BAFS 20:2018 - Good Agricultural Practice for Corn"
+source_agency = "Bureau of Agriculture and Fisheries Standards"
+document_type = "pns_gap"
+year = 2018
+crops = ["corn"]
+advisory_tier = "reviewed_advisory"
+allowed_use = "advisory_evidence"
+reviewed = true
+
+[[documents]]
+id = "pns_bafs_142_2018_corn_grits_hygiene"
+filename = "PNS-BAFS 142-2018 - Processing and Handling of Corn Grits GÇö Code of Practice GÇö Code of Hygienic Practice.pdf"
+title = "PNS/BAFS 142:2018 - Processing and Handling of Corn Grits"
+source_agency = "Bureau of Agriculture and Fisheries Standards"
+document_type = "pns_code_of_practice"
+year = 2018
+crops = ["corn"]
+advisory_tier = "reviewed_advisory"
+allowed_use = "advisory_evidence"
+reviewed = true
+
+[[documents]]
+id = "pns_bafs_143_2015_corn_silage"
+filename = "PNS-BAFS 143-2015 - Corn Silage GÇö Product Standard GÇö Specifications.pdf"
+title = "PNS/BAFS 143:2015 - Corn Silage Specifications"
+source_agency = "Bureau of Agriculture and Fisheries Standards"
+document_type = "product_standard"
+year = 2015
+crops = ["corn"]
+advisory_tier = "reviewed_advisory"
+allowed_use = "advisory_evidence"
+reviewed = true
+
+[[documents]]
+id = "pns_bafs_234_2018_baby_corn"
+filename = "PNS-BAFS 234-2018 - Baby Corn GÇö Product Standard GÇö Grading and Classification 3.pdf"
+title = "PNS/BAFS 234:2018 - Baby Corn Grading and Classification"
+source_agency = "Bureau of Agriculture and Fisheries Standards"
+document_type = "product_standard"
+year = 2018
+crops = ["corn"]
+advisory_tier = "reviewed_advisory"
+allowed_use = "advisory_evidence"
+reviewed = true
+
+[[documents]]
+id = "pns_bafs_251_2021_corn_mill"
+filename = "PNS-BAFS 251-2021 - Corn Mill GÇö Specifications.pdf"
+title = "PNS/BAFS 251:2021 - Corn Mill Specifications"
+source_agency = "Bureau of Agriculture and Fisheries Standards"
+document_type = "equipment_standard"
+year = 2021
+crops = ["corn"]
+advisory_tier = "reviewed_advisory"
+allowed_use = "advisory_evidence"
+reviewed = true

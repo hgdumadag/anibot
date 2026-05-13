@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Create Farming Plan - AniBot{% endblock %}
+{% block content %}
+<section class="intro">
+  <div>
+    <h1>Local Gemma farm planning for offline fields</h1>
+    <p>AniBot runs with Gemma through Ollama on this device, then grounds the answer in local rice and corn standards for newbie farmers working with weak or no internet.</p>
+  </div>
+</section>
+
+<section class="ollama-panel" aria-label="Ollama connection status">
+  <span class="status-dot {% if ollama.available %}is-ready{% endif %}" aria-hidden="true"></span>
+  <div>
+    <h2>Primary local AI engine</h2>
+    <strong>Gemma via Ollama: {{ ollama.model }}</strong>
+    <p>{{ ollama.message }}</p>
+    {% if not ollama.available %}
+    <p class="helper">Plan generation requires this local Gemma model. Start Ollama and install the configured model before creating a contest demo plan.</p>
+    {% endif %}
+  </div>
+  <a href="/ollama/status" target="_blank" rel="noreferrer">View status JSON</a>
+</section>
+
+<section class="workspace">
+  <aside class="step-rail" aria-label="Form sections">
+    <ol>
+      <li><span>1</span><strong>Location</strong></li>
+      <li><span>2</span><strong>Crop and farming setup</strong></li>
+      <li><span>3</span><strong>Farm conditions</strong></li>
+      <li><span>4</span><strong>Current concerns</strong></li>
+      <li><span>5</span><strong>Generate with Gemma</strong></li>
+    </ol>
+    <div class="rail-note">
+      <strong>Primary path</strong>
+      <span>Gemma through Ollama is required for plan creation; validation keeps source-backed safety controls in place.</span>
+    </div>
+  </aside>
+
+  <form class="plan-form" method="post" action="/plans">
+    <fieldset class="form-section">
+      <legend><span>1</span> Location</legend>
+      <div class="grid">
+        <label>Province
+          <input name="province" required placeholder="e.g. Nueva Ecija">
+        </label>
+        <label>Municipality / City
+          <input name="municipality" required placeholder="e.g. Munoz">
+        </label>
+        <label>Barangay
+          <input name="barangay" placeholder="Optional">
+        </label>
+      </div>
+      <label>Field condition notes
+        <textarea name="field_notes" rows="3" maxlength="500" placeholder="Nearby hazards, drainage problems, field history, or other notes"></textarea>
+      </label>
+      <label>Plan language
+        <select name="language">
+          <option value="english">English</option>
+          <option value="filipino">Filipino</option>
+          <option value="cebuano">Cebuano</option>
+        </select>
+      </label>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend><span>2</span> Crop and farming setup</legend>
+      <div class="grid">
+        <label>Crop
+          <select name="crop">
+            <option value="rice">Rice</option>
+            <option value="corn">Corn</option>
+          </select>
+        </label>
+        <label>Farming type
+          <select name="farming_type">
+            <option value="unknown">Unknown</option>
+            <option value="conventional">Conventional</option>
+            <option value="organic_traditional">Organic / traditional</option>
+          </select>
+        </label>
+        <label>Planning mode
+          <select name="planning_mode">
+            <option value="planning_to_plant">I am planning to plant</option>
+            <option value="already_planted">I already planted</option>
+          </select>
+        </label>
+        <label>Target planting date
+          <input type="date" name="target_planting_date">
+        </label>
+        <label>Current crop stage
+          <input name="current_stage" placeholder="If already planted">
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend><span>3</span> Farm conditions</legend>
+      <div class="grid">
+        <label>Water source
+          <select name="water_source">
+            <option value="unknown">Unknown</option>
+            <option value="irrigated">Irrigated</option>
+            <option value="rainfed">Rainfed</option>
+          </select>
+        </label>
+        <label>Field ecosystem
+          <select name="rice_ecosystem">
+            <option value="unknown">Unknown</option>
+            <option value="lowland">Lowland</option>
+            <option value="upland">Upland</option>
+          </select>
+        </label>
+        <label>Soil condition
+          <select name="soil_condition">
+            <option value="unknown">Unknown</option>
+            <option value="dry">Dry</option>
+            <option value="moist">Moist</option>
+            <option value="flooded">Flooded</option>
+          </select>
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend><span>4</span> Current concerns</legend>
+      <div class="checks">
+        {% for value, label in concerns %}
+        <label>
+          <input type="checkbox" name="concerns" value="{{ value }}" {% if value == "none" %}checked{% endif %}>
+          <span>{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <label>Observation notes
+        <textarea name="observation_notes" rows="3" maxlength="600" placeholder="Describe visible pests, weeds, water problems, growth issues, or harvest concerns"></textarea>
+      </label>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend><span>5</span> Generate with local Gemma</legend>
+      <div class="engine-mode {% if ollama.available %}is-ready{% endif %}">
+        <span class="status-dot {% if ollama.available %}is-ready{% endif %}" aria-hidden="true"></span>
+        <div>
+          <strong>{% if ollama.available %}Ready: AniBot will ask {{ ollama.model }} through Ollama.{% else %}Gemma/Ollama is required before this form can generate a plan.{% endif %}</strong>
+          <p>Every plan is grounded in the local PDF evidence database first. Gemma fills beginner-friendly calendar wording, then AniBot validates the result before saving it.</p>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="submit-row">
+      <button class="primary" type="submit" {% if not ollama.available %}disabled{% endif %}>Generate farming plan with Gemma</button>
+      <span>All data stays on this device.</span>
+    </div>
+  </form>
+
+  <aside class="side-panel">
+    <h2>What the plan includes</h2>
+    <ul>
+      <li>Before planting checklist</li>
+      <li>Soil and fertility guidance</li>
+      <li>Water management plan</li>
+      <li>Pest, disease, and weed monitoring</li>
+      <li>Harvest and recordkeeping steps</li>
+    </ul>
+    {% if latest %}
+    <h2>Recent plans</h2>
+    <div class="recent-list">
+      {% for item in latest %}
+      <a href="/plans/{{ item['id'] }}">Plan #{{ item['id'] }} - {{ item['status'] }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </aside>
+</section>
+{% endblock %}

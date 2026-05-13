@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}Farming Plan #{{ plan_id }} - AniBot{% endblock %}
+{% block content %}
+{% set is_fil = plan.language == "filipino" %}
+{% set is_ceb = plan.language == "cebuano" %}
+<section class="plan-hero">
+  <div>
+    <a class="back-link" href="/">{% if is_ceb %}Paghimo og laing plano{% elif is_fil %}Gumawa ng ibang plano{% else %}Create another plan{% endif %}</a>
+    <h1>{% if is_ceb %}Plano sa {{ "humay" if plan.crop == "rice" else "mais" }}{% elif is_fil %}Plano sa {{ "palay" if plan.crop == "rice" else "mais" }}{% else %}{{ plan.crop.title() }} farming plan{% endif %}</h1>
+    <p>{{ plan.location }} - {{ plan.planning_basis }}</p>
+    <div class="plan-actions">
+      <button class="print-button" type="button" onclick="window.print()">{% if is_ceb %}I-print ang plano{% elif is_fil %}I-print ang plano{% else %}Print farming plan{% endif %}</button>
+    </div>
+  </div>
+  <div class="status-card">
+    <span class="status-label">{% if is_ceb %}Status sa plano{% elif is_fil %}Status ng plano{% else %}Plan status{% endif %}</span>
+    <strong>{{ plan.status.replace("_", " ").title() }}</strong>
+    <span>{% if is_ceb %}Pinulongan: Cebuano{% elif is_fil %}Wika: Filipino{% else %}Language: English{% endif %}</span>
+    <span>{{ plan.source_count }} cited source chunks</span>
+    {% if plan.generation_method == "ollama" %}
+    <span>Generated with local Ollama model: {{ plan.llm_model }}</span>
+    {% elif plan.generation_method == "fallback" %}
+    <span>Local LLM fallback used{% if plan.llm_model %}: {{ plan.llm_model }}{% endif %}</span>
+    {% else %}
+    <span>Source-backed template fallback</span>
+    {% endif %}
+    {% if plan.llm_error %}
+    <span class="llm-error">LLM rejected: {{ plan.llm_error }}</span>
+    {% endif %}
+  </div>
+</section>
+
+{% if plan.timeline %}
+<section class="plan-table-section">
+  <h2>{% if is_ceb %}Kalendaryo para sa Bag-ohan{% elif is_fil %}Kalendaryo para sa Baguhan{% else %}Beginner Calendar{% endif %}</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{% if is_ceb %}Panahon{% elif is_fil %}Panahon{% else %}Period{% endif %}</th>
+          <th>{% if is_ceb %}Gibanabana nga petsa{% elif is_fil %}Tinatayang petsa{% else %}Approx. date{% endif %}</th>
+          <th>{% if is_ceb %}Trabaho{% elif is_fil %}Gawain{% else %}Task{% endif %}</th>
+          <th>{% if is_ceb %}Unsaon paghimo{% elif is_fil %}Paano gawin{% else %}How to do it{% endif %}</th>
+          <th>{% if is_ceb %}Obserbahi{% elif is_fil %}Obserbahan{% else %}Observe{% endif %}</th>
+          <th>{% if is_ceb %}Pangayo og tabang kung{% elif is_fil %}Humingi ng tulong kung{% else %}Ask for help if{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in plan.timeline %}
+        <tr>
+          <td>{{ item.period }}</td>
+          <td>{{ item.approximate_date }}</td>
+          <td>{{ item.task }}</td>
+          <td>
+            <ol>
+              {% for step in item.how_to_steps %}
+              <li>{{ step }}</li>
+              {% endfor %}
+            </ol>
+          </td>
+          <td>{{ item.observe }}</td>
+          <td>{{ item.ask_for_help_if }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if plan.decision_rows %}
+<section class="plan-table-section">
+  <h2>{% if is_ceb %}Sunod nga Buhaton{% elif is_fil %}Susunod na Gagawin{% else %}What To Do Next{% endif %}</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{% if is_ceb %}Sitwasyon{% elif is_fil %}Sitwasyon{% else %}Situation{% endif %}</th>
+          <th>{% if is_ceb %}Unang susihon{% elif is_fil %}Unang suriin{% else %}First check{% endif %}</th>
+          <th>{% if is_ceb %}Sunod nga buhaton{% elif is_fil %}Susunod na gawin{% else %}What to do next{% endif %}</th>
+          <th>{% if is_ceb %}Kontaka ang MAO kung{% elif is_fil %}Kontakin ang MAO kung{% else %}Contact MAO if{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in plan.decision_rows %}
+        <tr>
+          <td>{{ row.situation }}</td>
+          <td>{{ row.first_check }}</td>
+          <td>{{ row.what_to_do_next }}</td>
+          <td>{{ row.contact_mao_if }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if plan.material_checklist %}
+<section class="plan-table-section">
+  <h2>{% if is_ceb %}Checklist sa Materyales{% elif is_fil %}Checklist ng Materyales{% else %}Materials Checklist{% endif %}</h2>
+  <div class="checklist-grid">
+    {% for group in plan.material_checklist %}
+    <div class="checklist-group">
+      <h3>{{ group.category }}</h3>
+      <ul>
+        {% for item in group.items %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if plan.record_templates %}
+<section class="plan-table-section">
+  <h2>{% if is_ceb %}Mga Template sa Record{% elif is_fil %}Mga Template ng Talaan{% else %}Recordkeeping Templates{% endif %}</h2>
+  {% for template in plan.record_templates %}
+  <div class="record-template">
+    <h3>{{ template.title }}</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {% for column in template.columns %}
+            <th>{{ column }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {% for value in template.sample_row %}
+            <td>{{ value }}</td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if plan.glossary %}
+<section class="plan-table-section">
+  <h2>{% if is_ceb %}Simple nga Kahulugan{% elif is_fil %}Simpleng Kahulugan{% else %}Simple Terms{% endif %}</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{% if is_ceb %}Termino{% elif is_fil %}Termino{% else %}Term{% endif %}</th>
+          <th>{% if is_ceb %}Kahulugan{% elif is_fil %}Kahulugan{% else %}Meaning{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in plan.glossary %}
+        <tr>
+          <td>{{ item.term }}</td>
+          <td>{{ item.explanation }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if plan.mao_questions %}
+<section class="plan-table-section">
+  <h2>{% if is_ceb %}Checklist sa Pagbisita sa MAO{% elif is_fil %}Checklist sa Pagbisita sa MAO{% else %}MAO Visit Checklist{% endif %}</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{% if is_ceb %}Paksa{% elif is_fil %}Paksa{% else %}Topic{% endif %}</th>
+          <th>{% if is_ceb %}Pangutana{% elif is_fil %}Tanong{% else %}Question{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in plan.mao_questions %}
+        <tr>
+          <td>{{ item.topic }}</td>
+          <td>{{ item.question }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if plan.warnings %}
+<section class="warnings">
+  <h2>{% if is_ceb %}Mga Pahimangno{% elif is_fil %}Mga Babala{% else %}Warnings{% endif %}</h2>
+  <ul>
+    {% for warning in plan.warnings %}
+    <li>{{ warning }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="plan-sections">
+  {% for section in plan.sections %}
+  <article class="plan-section">
+    <h2>{{ section.title }}</h2>
+    <ul class="guidance">
+      {% for item in section.guidance %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% if section.actions %}
+    <div class="actions">
+      {% for action in section.actions %}
+      <div>
+        <strong>{{ action.task }}</strong>
+        <span>{% if is_ceb %}Obserbahi{% elif is_fil %}Obserbahan{% else %}Observe{% endif %}: {{ action.observe }}</span>
+        <span>{% if is_ceb %}Pangayo og tabang kung{% elif is_fil %}Humingi ng tulong kung{% else %}Ask for help if{% endif %}: {{ action.ask_for_help_if }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if section.citations %}
+    <details class="sources">
+      <summary>{% if is_ceb %}Mga Source{% elif is_fil %}Mga Source{% else %}Sources{% endif %}</summary>
+      <ul>
+        {% for citation in section.citations %}
+        <li>{{ citation.title }}, page {{ citation.page_number }} - {{ citation.heading }} <code>{{ citation.chunk_id }}</code></li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% elif section.fallback_reason %}
+    <p class="fallback">{{ section.fallback_reason }}</p>
+    {% endif %}
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}
