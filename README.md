@@ -57,7 +57,8 @@ Defaults:
 
 - Host: `http://127.0.0.1:11434`
 - Model: `gemma4:e2b`
-- Timeout: `45` seconds
+- Timeout: `120` seconds
+- Max generated tokens: `1400`
 
 Override with:
 
@@ -65,6 +66,7 @@ Override with:
 $env:ANIBOT_OLLAMA_HOST = "http://127.0.0.1:11434"
 $env:ANIBOT_OLLAMA_MODEL = "gemma4:e2b"
 $env:ANIBOT_OLLAMA_TIMEOUT_SECONDS = "120"
+$env:ANIBOT_OLLAMA_NUM_PREDICT = "1400"
 ```
 
 Check connection:

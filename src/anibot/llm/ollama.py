@@ -10,8 +10,8 @@ import httpx
 
 DEFAULT_OLLAMA_HOST = os.getenv("ANIBOT_OLLAMA_HOST", "http://127.0.0.1:11434")
 DEFAULT_OLLAMA_MODEL = os.getenv("ANIBOT_OLLAMA_MODEL", "gemma4:e2b")
-DEFAULT_OLLAMA_TIMEOUT_SECONDS = float(os.getenv("ANIBOT_OLLAMA_TIMEOUT_SECONDS", "45"))
-DEFAULT_OLLAMA_NUM_PREDICT = int(os.getenv("ANIBOT_OLLAMA_NUM_PREDICT", "900"))
+DEFAULT_OLLAMA_TIMEOUT_SECONDS = float(os.getenv("ANIBOT_OLLAMA_TIMEOUT_SECONDS", "120"))
+DEFAULT_OLLAMA_NUM_PREDICT = int(os.getenv("ANIBOT_OLLAMA_NUM_PREDICT", "1400"))
 
 
 @dataclass(frozen=True)
@@ -69,21 +69,39 @@ class OllamaClient:
         payload = {
             "model": self.model,
             "prompt": prompt,
-            "stream": False,
+            "stream": True,
             "format": "json",
+            "keep_alive": "30m",
             "options": {
                 "temperature": 0.1,
                 "top_p": 0.8,
                 "num_predict": self.num_predict,
             },
         }
-        response = httpx.post(f"{self.host}/api/generate", json=payload, timeout=self.timeout_seconds)
+        timeout = httpx.Timeout(connect=5.0, read=self.timeout_seconds, write=10.0, pool=5.0)
+        raw = ""
         try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            detail = _ollama_error_detail(response)
-            raise RuntimeError(f"Ollama generation failed with HTTP {response.status_code}: {detail}") from exc
-        raw = response.json().get("response", "")
+            with httpx.stream("POST", f"{self.host}/api/generate", json=payload, timeout=timeout) as response:
+                try:
+                    response.raise_for_status()
+                except httpx.HTTPStatusError as exc:
+                    response.read()
+                    detail = _ollama_error_detail(response)
+                    raise RuntimeError(f"Ollama generation failed with HTTP {response.status_code}: {detail}") from exc
+                for line in response.iter_lines():
+                    if not line:
+                        continue
+                    chunk = json.loads(line)
+                    error = chunk.get("error")
+                    if isinstance(error, str) and error.strip():
+                        raise RuntimeError(f"Ollama generation failed: {error.strip()[:500]}")
+                    fragment = chunk.get("response", "")
+                    if isinstance(fragment, str):
+                        raw += fragment
+                    if chunk.get("done") is True:
+                        break
+        except httpx.ReadTimeout as exc:
+            raise TimeoutError(f"Ollama generation timed out after {self.timeout_seconds:g} seconds") from exc
         if not isinstance(raw, str) or not raw.strip():
             raise ValueError("Ollama returned an empty response")
         return json.loads(raw)
