@@ -13,12 +13,12 @@
         <span class="brand-mark" aria-hidden="true">A</span>
         <span>
           <strong>AniBot</strong>
-          <small>Local Gemma Planner</small>
+          <small>{% if demo_mode %}Judging Demo{% else %}Local Gemma Planner{% endif %}</small>
         </span>
       </a>
       <nav class="header-status" aria-label="Application status">
-        <span><i aria-hidden="true"></i> Ollama-first</span>
-        <span>Offline-ready evidence</span>
+        <span><i aria-hidden="true"></i> {% if demo_mode %}Vertex AI demo{% else %}Ollama-first{% endif %}</span>
+        <span>{% if demo_mode %}Temporary online judging{% else %}Offline-ready evidence{% endif %}</span>
       </nav>
     </header>
     <main>

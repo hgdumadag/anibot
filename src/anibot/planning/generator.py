@@ -471,7 +471,7 @@ def _plan_artifacts_with_llm(
             farming_type=draft.farming_type,
             planning_basis=draft.planning_basis,
             status=draft.status,
-            generation_method="ollama",
+            generation_method=getattr(llm_client, "generation_method", "ollama"),
             llm_model=llm_client.model,
             llm_error=None,
             warnings=draft.warnings,

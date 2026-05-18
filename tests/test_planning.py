@@ -285,6 +285,8 @@ def test_form_does_not_ask_for_available_capital() -> None:
     assert "cebuano" in html
     assert "primary local ai engine" in html
     assert "local gemma" in html
+    assert "all data stays on this device" in html
+    assert "vertex ai" not in html
     assert 'name="use_ollama"' not in html
 
 
@@ -483,6 +485,130 @@ def test_create_plan_requires_gemma_ollama_connection(tmp_path: Path, monkeypatc
     assert response.status_code == 503
     assert "Gemma via Ollama is required" in response.text
     assert not app_db.exists()
+
+
+def test_vercel_judging_form_uses_vertex_demo_copy(monkeypatch) -> None:
+    monkeypatch.setenv("ANIBOT_RUNTIME_MODE", "vercel_judging")
+    monkeypatch.delenv("ANIBOT_VERTEX_PROJECT", raising=False)
+    monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS_JSON", raising=False)
+    monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
+
+    client = TestClient(app)
+    response = client.get("/")
+
+    assert response.status_code == 200
+    html = response.text.lower()
+    assert "judging demo: gemma via vertex ai" in html
+    assert "temporary vercel judging mode" in html
+    assert "plans are not stored permanently in online judging mode" in html
+    assert "all data stays on this device" not in html
+    assert "recent plans" not in html
+
+
+def test_vercel_judging_requires_vertex_config(tmp_path: Path, monkeypatch) -> None:
+    knowledge_db = _db(tmp_path)
+    app_db = tmp_path / "app.db"
+
+    monkeypatch.setenv("ANIBOT_RUNTIME_MODE", "vercel_judging")
+    monkeypatch.delenv("ANIBOT_VERTEX_PROJECT", raising=False)
+    monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS_JSON", raising=False)
+    monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
+    monkeypatch.setattr(main_module, "KNOWLEDGE_DB", knowledge_db)
+    monkeypatch.setattr(main_module, "APP_DB", app_db)
+
+    client = TestClient(app)
+    response = client.post(
+        "/plans",
+        data={
+            "province": "Nueva Ecija",
+            "municipality": "Munoz",
+            "language": "english",
+            "crop": "rice",
+            "farming_type": "conventional",
+            "planning_mode": "planning_to_plant",
+            "target_planting_date": "June",
+            "water_source": "irrigated",
+            "rice_ecosystem": "lowland",
+            "soil_condition": "moist",
+            "concerns": ["fertilizer_nutrient"],
+        },
+    )
+
+    assert response.status_code == 503
+    assert "Vertex AI judging mode is not configured" in response.text
+    assert not app_db.exists()
+
+
+def test_vercel_judging_renders_plan_without_persistent_app_db(tmp_path: Path, monkeypatch) -> None:
+    knowledge_db = _db(tmp_path)
+    app_db = tmp_path / "app.db"
+
+    class FakeVertexLlm:
+        generation_method = "vertex"
+        model = "gemma-4-26b-a4b-it"
+
+        def generate_json(self, prompt: str) -> dict:
+            payload = json.loads(prompt.split("INPUT=", 1)[1])
+            return {
+                "timeline": [
+                    {
+                        "period": item["period"],
+                        "approximate_date": item["approximate_date"],
+                        "task": f"Check demo readiness for {item['period']}.",
+                        "how_to_steps": [
+                            "Check soil moisture, field access, and water control.",
+                            "Record field condition and crop observations.",
+                            "Ask MAO if local timing or field symptoms are unclear.",
+                        ],
+                        "observe": "Soil moisture, water control, weeds, pests, and crop growth.",
+                        "ask_for_help_if": "Local timing, pest identity, or water control is uncertain.",
+                    }
+                    for item in payload["calendar"]
+                ],
+            }
+
+    monkeypatch.setenv("ANIBOT_RUNTIME_MODE", "vercel_judging")
+    monkeypatch.setattr(main_module, "KNOWLEDGE_DB", knowledge_db)
+    monkeypatch.setattr(main_module, "APP_DB", app_db)
+    monkeypatch.setattr(main_module, "_required_vertex_client", lambda: FakeVertexLlm())
+
+    client = TestClient(app)
+    response = client.post(
+        "/plans",
+        data={
+            "province": "Nueva Ecija",
+            "municipality": "Munoz",
+            "barangay": "Demo Barangay",
+            "language": "english",
+            "crop": "rice",
+            "farming_type": "conventional",
+            "planning_mode": "planning_to_plant",
+            "target_planting_date": "June",
+            "water_source": "irrigated",
+            "rice_ecosystem": "lowland",
+            "soil_condition": "moist",
+            "concerns": ["fertilizer_nutrient"],
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 200
+    html = response.text
+    assert "Temporary online judging mode" in html
+    assert "Generated with Vertex AI judging model: gemma-4-26b-a4b-it" in html
+    assert "Print farming plan" in html
+    assert "Sources" in html
+    assert not app_db.exists()
+
+
+def test_vercel_judging_plan_urls_are_not_persisted(monkeypatch) -> None:
+    monkeypatch.setenv("ANIBOT_RUNTIME_MODE", "vercel_judging")
+
+    client = TestClient(app)
+    response = client.get("/plans/1")
+
+    assert response.status_code == 404
+    assert "not persisted" in response.text
 
 
 def test_llm_planner_generates_artifacts_without_changing_citations(tmp_path: Path) -> None:

@@ -181,6 +181,7 @@ a {
 }
 
 .note,
+.demo-notice,
 .status-card,
 .ollama-panel,
 .side-panel,
@@ -196,24 +197,29 @@ a {
 }
 
 .note,
+.demo-notice,
 .status-card {
   padding: 18px;
 }
 
 .note strong,
 .note span,
+.demo-notice strong,
+.demo-notice span,
 .status-card strong,
 .status-card span {
   display: block;
 }
 
 .note strong,
+.demo-notice strong,
 .status-card strong {
   color: var(--ink);
   font-size: 18px;
 }
 
 .note span,
+.demo-notice span,
 .status-card span {
   color: var(--muted);
   margin-top: 6px;
@@ -231,6 +237,17 @@ a {
 .status-card .llm-error {
   color: var(--danger);
   overflow-wrap: anywhere;
+}
+
+.demo-notice {
+  margin: 0 0 20px;
+  background: var(--amber-soft);
+  border-color: rgba(180, 107, 42, 0.32);
+}
+
+.demo-copy {
+  color: var(--amber);
+  font-weight: 800;
 }
 
 .ollama-panel {

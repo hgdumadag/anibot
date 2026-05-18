@@ -145,7 +145,7 @@ class FarmingPlan(BaseModel):
     farming_type: FarmingType
     planning_basis: str
     status: Literal["generated", "unsupported_crop", "insufficient_evidence"]
-    generation_method: Literal["template", "ollama", "fallback"] = "template"
+    generation_method: Literal["template", "ollama", "vertex", "fallback"] = "template"
     llm_model: str | None = None
     llm_error: str | None = None
     warnings: list[str]

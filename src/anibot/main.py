@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Annotated
 
@@ -9,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from anibot.llm.ollama import OllamaClient
+from anibot.llm.vertex import VertexClient
 from anibot.planning.generator import generate_farming_plan
 from anibot.planning.repository import FarmingPlanRepository
 from anibot.planning.schema import Concern, FarmingPlanRequest
@@ -26,6 +28,9 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
 
+VERCEL_JUDGING_MODE = "vercel_judging"
+
+
 @app.get("/", response_class=HTMLResponse)
 def new_plan(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
@@ -34,7 +39,8 @@ def new_plan(request: Request) -> HTMLResponse:
         {
             "concerns": _concern_options(),
             "latest": _latest_plans(),
-            "ollama": _ollama_status(),
+            "engine": _engine_status(),
+            "demo_mode": _is_vercel_judging_mode(),
         },
     )
 
@@ -53,6 +59,7 @@ def ollama_status() -> dict:
 
 @app.post("/plans")
 def create_plan(
+    request: Request,
     province: Annotated[str, Form()],
     municipality: Annotated[str, Form()],
     barangay: Annotated[str, Form()] = "",
@@ -68,7 +75,7 @@ def create_plan(
     soil_condition: Annotated[str, Form()] = "unknown",
     concerns: Annotated[list[Concern], Form()] = ["none"],
     observation_notes: Annotated[str, Form()] = "",
-) -> RedirectResponse:
+):
     if not KNOWLEDGE_DB.exists():
         raise HTTPException(status_code=503, detail="Knowledge database not found. Run scripts/ingest_knowledge.py first.")
     plan_request = FarmingPlanRequest(
@@ -88,8 +95,19 @@ def create_plan(
         concerns=concerns,
         observation_notes=observation_notes,
     )
-    ollama_client = _required_ollama_client()
-    plan = generate_farming_plan(plan_request, KNOWLEDGE_DB, DATA_DIR / "chroma", llm_client=ollama_client)
+    llm_client = _required_llm_client()
+    plan = generate_farming_plan(plan_request, KNOWLEDGE_DB, DATA_DIR / "chroma", llm_client=llm_client)
+    if _is_vercel_judging_mode():
+        return templates.TemplateResponse(
+            request,
+            "plan.html",
+            {
+                "plan_request": plan_request,
+                "plan": plan,
+                "plan_id": None,
+                "demo_mode": True,
+            },
+        )
     repo = FarmingPlanRepository(APP_DB)
     try:
         plan_id = repo.save(plan_request, plan)
@@ -100,6 +118,8 @@ def create_plan(
 
 @app.get("/plans/{plan_id}", response_class=HTMLResponse)
 def show_plan(plan_id: int, request: Request) -> HTMLResponse:
+    if _is_vercel_judging_mode():
+        raise HTTPException(status_code=404, detail="Online judging plans are rendered immediately and are not persisted.")
     repo = FarmingPlanRepository(APP_DB)
     try:
         result = repo.get(plan_id)
@@ -120,6 +140,8 @@ def show_plan(plan_id: int, request: Request) -> HTMLResponse:
 
 
 def _latest_plans() -> list:
+    if _is_vercel_judging_mode():
+        return []
     if not APP_DB.exists():
         return []
     repo = FarmingPlanRepository(APP_DB)
@@ -144,6 +166,34 @@ def _concern_options() -> list[tuple[str, str]]:
 
 def _ollama_status():
     return OllamaClient().status(timeout_seconds=0.8)
+
+
+def _vertex_status():
+    return VertexClient().status()
+
+
+def _engine_status():
+    if _is_vercel_judging_mode():
+        return _vertex_status()
+    return _ollama_status()
+
+
+def _is_vercel_judging_mode() -> bool:
+    return os.getenv("ANIBOT_RUNTIME_MODE", "").strip().lower() == VERCEL_JUDGING_MODE
+
+
+def _required_llm_client():
+    if _is_vercel_judging_mode():
+        return _required_vertex_client()
+    return _required_ollama_client()
+
+
+def _required_vertex_client() -> VertexClient:
+    candidate = VertexClient()
+    status = candidate.status()
+    if not status.available:
+        raise HTTPException(status_code=503, detail=status.message)
+    return candidate
 
 
 def _required_ollama_client() -> OllamaClient:
