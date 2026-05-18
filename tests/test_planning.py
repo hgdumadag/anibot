@@ -611,6 +611,46 @@ def test_vercel_judging_plan_urls_are_not_persisted(monkeypatch) -> None:
     assert "not persisted" in response.text
 
 
+def test_vercel_judging_unexpected_errors_return_diagnostic_503(tmp_path: Path, monkeypatch) -> None:
+    knowledge_db = _db(tmp_path)
+
+    class BrokenVertexLlm:
+        model = "broken-vertex"
+
+        def generate_json(self, prompt: str) -> dict:
+            raise RuntimeError("upstream exploded")
+
+    def broken_generator(*args, **kwargs):
+        raise RuntimeError("template render setup failed")
+
+    monkeypatch.setenv("ANIBOT_RUNTIME_MODE", "vercel_judging")
+    monkeypatch.setattr(main_module, "KNOWLEDGE_DB", knowledge_db)
+    monkeypatch.setattr(main_module, "_required_vertex_client", lambda: BrokenVertexLlm())
+    monkeypatch.setattr(main_module, "generate_farming_plan", broken_generator)
+
+    client = TestClient(app)
+    response = client.post(
+        "/plans",
+        data={
+            "province": "Nueva Ecija",
+            "municipality": "Munoz",
+            "language": "english",
+            "crop": "rice",
+            "farming_type": "conventional",
+            "planning_mode": "planning_to_plant",
+            "target_planting_date": "June",
+            "water_source": "irrigated",
+            "rice_ecosystem": "lowland",
+            "soil_condition": "moist",
+            "concerns": ["fertilizer_nutrient"],
+        },
+    )
+
+    assert response.status_code == 503
+    assert "Vercel judging plan generation failed" in response.text
+    assert "RuntimeError" in response.text
+
+
 def test_llm_planner_generates_artifacts_without_changing_citations(tmp_path: Path) -> None:
     request = _rice_request()
     draft = generate_farming_plan(request, _db(tmp_path))

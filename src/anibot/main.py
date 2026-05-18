@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Annotated
@@ -22,6 +23,7 @@ KNOWLEDGE_DB = DATA_DIR / "anibot_knowledge.db"
 APP_DB = DATA_DIR / "anibot_app.db"
 TEMPLATE_DIR = Path(__file__).resolve().parent / "web" / "templates"
 STATIC_DIR = Path(__file__).resolve().parent / "web" / "static"
+LOGGER = logging.getLogger(__name__)
 
 app = FastAPI(title="AniBot Farming Plan")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -95,19 +97,30 @@ def create_plan(
         concerns=concerns,
         observation_notes=observation_notes,
     )
-    llm_client = _required_llm_client()
-    plan = generate_farming_plan(plan_request, KNOWLEDGE_DB, DATA_DIR / "chroma", llm_client=llm_client)
     if _is_vercel_judging_mode():
-        return templates.TemplateResponse(
-            request,
-            "plan.html",
-            {
-                "plan_request": plan_request,
-                "plan": plan,
-                "plan_id": None,
-                "demo_mode": True,
-            },
-        )
+        try:
+            llm_client = _required_vertex_client()
+            plan = generate_farming_plan(plan_request, KNOWLEDGE_DB, DATA_DIR / "chroma", llm_client=llm_client)
+            return templates.TemplateResponse(
+                request,
+                "plan.html",
+                {
+                    "plan_request": plan_request,
+                    "plan": plan,
+                    "plan_id": None,
+                    "demo_mode": True,
+                },
+            )
+        except HTTPException:
+            raise
+        except Exception as exc:
+            LOGGER.exception("Vercel judging plan generation failed")
+            raise HTTPException(
+                status_code=503,
+                detail=f"Vercel judging plan generation failed: {_safe_runtime_error(exc)}",
+            ) from exc
+    llm_client = _required_ollama_client()
+    plan = generate_farming_plan(plan_request, KNOWLEDGE_DB, DATA_DIR / "chroma", llm_client=llm_client)
     repo = FarmingPlanRepository(APP_DB)
     try:
         plan_id = repo.save(plan_request, plan)
@@ -205,3 +218,12 @@ def _required_ollama_client() -> OllamaClient:
             detail=f"Gemma via Ollama is required to generate a plan. {status.message}",
         )
     return candidate
+
+
+def _safe_runtime_error(exc: Exception) -> str:
+    text = " ".join(str(exc).split())
+    for key in ("GOOGLE_APPLICATION_CREDENTIALS_JSON", "private_key", "client_email", "token"):
+        text = text.replace(key, "[redacted]")
+    if not text:
+        text = exc.__class__.__name__
+    return f"{exc.__class__.__name__}: {text[:700]}"
