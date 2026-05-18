@@ -74,12 +74,9 @@ class VertexClient:
             raise RuntimeError("google-genai is required for Vertex AI judging mode.") from exc
 
         client = genai.Client(vertexai=True, project=self.project, location=self.location)
-        contents: types.ContentListUnion = [
-            types.Content(role="user", parts=[types.Part.from_text(text=prompt)])
-        ]
         chat = client.chats.create(model=self.model)
         response = chat.send_message(
-            contents,
+            prompt,
             config=types.GenerateContentConfig(
                 temperature=0.1,
                 top_p=0.8,

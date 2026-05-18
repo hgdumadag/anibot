@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import sys
+import types as module_types
 
 import pytest
 
@@ -50,3 +52,47 @@ def test_vertex_rejects_invalid_service_account_json(monkeypatch: pytest.MonkeyP
     with pytest.raises(RuntimeError, match="valid service account JSON"):
         vertex_module._write_service_account_credentials()
 
+
+def test_vertex_sends_prompt_string_to_maas_chat(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict = {}
+
+    class FakeTypes:
+        class GenerateContentConfig:
+            def __init__(self, **kwargs):
+                captured["config"] = kwargs
+
+    class FakeChat:
+        def send_message(self, message, config=None):
+            captured["message"] = message
+            captured["config_obj"] = config
+
+            class Response:
+                text = '{"timeline":[]}'
+
+            return Response()
+
+    class FakeChats:
+        def create(self, model):
+            captured["model"] = model
+            return FakeChat()
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            captured["client"] = kwargs
+            self.chats = FakeChats()
+
+    monkeypatch.setenv("ANIBOT_VERTEX_PROJECT", "demo-project")
+    monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", "already-set.json")
+    fake_google = module_types.ModuleType("google")
+    fake_genai = module_types.ModuleType("google.genai")
+    fake_genai.Client = FakeClient
+    fake_genai.types = FakeTypes
+    monkeypatch.setitem(sys.modules, "google", fake_google)
+    monkeypatch.setitem(sys.modules, "google.genai", fake_genai)
+    monkeypatch.setitem(sys.modules, "google.genai.types", FakeTypes)
+
+    payload = VertexClient().generate_json("prompt text")
+
+    assert payload == {"timeline": []}
+    assert captured["message"] == "prompt text"
+    assert captured["model"] == "gemma-4-26b-a4b-it-maas"
