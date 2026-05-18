@@ -8,9 +8,6 @@
     <a class="back-link" href="/">{% if is_ceb %}Paghimo og laing plano{% elif is_fil %}Gumawa ng ibang plano{% else %}Create another plan{% endif %}</a>
     <h1>{% if is_ceb %}Plano sa {{ "humay" if plan.crop == "rice" else "mais" }}{% elif is_fil %}Plano sa {{ "palay" if plan.crop == "rice" else "mais" }}{% else %}{{ plan.crop.title() }} farming plan{% endif %}</h1>
     <p>{{ plan.location }} - {{ plan.planning_basis }}</p>
-    {% if demo_mode %}
-    <p class="demo-copy">Temporary online mode. This plan is rendered for the current demo session and is not stored permanently.</p>
-    {% endif %}
     <div class="plan-actions">
       <button class="print-button" type="button" onclick="window.print()">{% if is_ceb %}I-print ang plano{% elif is_fil %}I-print ang plano{% else %}Print farming plan{% endif %}</button>
     </div>

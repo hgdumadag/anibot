@@ -596,7 +596,8 @@ def test_vercel_judging_renders_plan_without_persistent_app_db(tmp_path: Path, m
 
     assert response.status_code == 200
     html = response.text
-    assert "Temporary online mode" in html
+    assert "This plan is rendered for the current demo session" not in html
+    assert "This plan is rendered for the current demo session and is not stored permanently" not in html
     assert "Generated with Vertex AI model: gemma-4-26b-a4b-it" in html
     assert "Print farming plan" in html
     assert "Sources" in html
