@@ -85,7 +85,7 @@ class KnowledgeStore:
         self.db_path = db_path
         if readonly:
             uri = self.db_path.resolve().as_posix()
-            self.conn = sqlite3.connect(f"file:{uri}?mode=ro", uri=True)
+            self.conn = sqlite3.connect(f"file:{uri}?mode=ro&immutable=1", uri=True)
         else:
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
             self.conn = sqlite3.connect(str(db_path))

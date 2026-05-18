@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+import shutil
 from typing import Annotated
 
 from fastapi import FastAPI, Form, HTTPException, Request
@@ -21,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data"
 KNOWLEDGE_DB = DATA_DIR / "anibot_knowledge.db"
 APP_DB = DATA_DIR / "anibot_app.db"
+RUNTIME_KNOWLEDGE_DB = Path(os.getenv("ANIBOT_RUNTIME_KNOWLEDGE_DB", "/tmp/anibot_knowledge.db"))
 TEMPLATE_DIR = Path(__file__).resolve().parent / "web" / "templates"
 STATIC_DIR = Path(__file__).resolve().parent / "web" / "static"
 LOGGER = logging.getLogger(__name__)
@@ -100,7 +102,7 @@ def create_plan(
     if _is_vercel_judging_mode():
         try:
             llm_client = _required_vertex_client()
-            plan = generate_farming_plan(plan_request, KNOWLEDGE_DB, _chroma_dir(), llm_client=llm_client)
+            plan = generate_farming_plan(plan_request, _knowledge_db_for_runtime(), _chroma_dir(), llm_client=llm_client)
             return templates.TemplateResponse(
                 request,
                 "plan.html",
@@ -193,6 +195,15 @@ def _engine_status():
 
 def _is_vercel_judging_mode() -> bool:
     return os.getenv("ANIBOT_RUNTIME_MODE", "").strip().lower() == VERCEL_JUDGING_MODE
+
+
+def _knowledge_db_for_runtime() -> Path:
+    if not _is_vercel_judging_mode():
+        return KNOWLEDGE_DB
+    if not RUNTIME_KNOWLEDGE_DB.exists() or RUNTIME_KNOWLEDGE_DB.stat().st_size != KNOWLEDGE_DB.stat().st_size:
+        RUNTIME_KNOWLEDGE_DB.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(KNOWLEDGE_DB, RUNTIME_KNOWLEDGE_DB)
+    return RUNTIME_KNOWLEDGE_DB
 
 
 def _chroma_dir() -> Path | None:

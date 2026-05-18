@@ -603,6 +603,7 @@ def test_vercel_judging_renders_plan_without_persistent_app_db(tmp_path: Path, m
 
 def test_vercel_judging_does_not_use_chroma_dir(tmp_path: Path, monkeypatch) -> None:
     knowledge_db = _db(tmp_path)
+    runtime_db = tmp_path / "runtime" / "anibot_knowledge.db"
     captured: dict = {}
 
     class FakeVertexLlm:
@@ -616,6 +617,7 @@ def test_vercel_judging_does_not_use_chroma_dir(tmp_path: Path, monkeypatch) -> 
 
     monkeypatch.setenv("ANIBOT_RUNTIME_MODE", "vercel_judging")
     monkeypatch.setattr(main_module, "KNOWLEDGE_DB", knowledge_db)
+    monkeypatch.setattr(main_module, "RUNTIME_KNOWLEDGE_DB", runtime_db)
     monkeypatch.setattr(main_module, "_required_vertex_client", lambda: FakeVertexLlm())
     monkeypatch.setattr(main_module, "generate_farming_plan", fake_generator)
 
@@ -638,8 +640,9 @@ def test_vercel_judging_does_not_use_chroma_dir(tmp_path: Path, monkeypatch) -> 
     )
 
     assert response.status_code == 200
-    assert captured["knowledge_path"] == knowledge_db
+    assert captured["knowledge_path"] == runtime_db
     assert captured["chroma_dir"] is None
+    assert runtime_db.exists()
 
 
 def test_vercel_judging_plan_urls_are_not_persisted(monkeypatch) -> None:
