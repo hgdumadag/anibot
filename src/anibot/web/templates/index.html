@@ -3,26 +3,26 @@
 {% block content %}
 <section class="intro">
   <div>
-    <h1>{% if demo_mode %}Judging demo for AniBot farm planning{% else %}Local Gemma farm planning for offline fields{% endif %}</h1>
-    <p>{% if demo_mode %}AniBot is temporarily online for judging with Gemma through Vertex AI, while keeping the same source-grounded rice and corn planning workflow intended for the offline kiosk.{% else %}AniBot runs with Gemma through Ollama on this device, then grounds the answer in local rice and corn standards for newbie farmers working with weak or no internet.{% endif %}</p>
+    <h1>{% if demo_mode %}Online AniBot farm planning{% else %}Local Gemma farm planning for offline fields{% endif %}</h1>
+    <p>{% if demo_mode %}AniBot is temporarily online with Gemma through Vertex AI, while keeping the same source-grounded rice and corn planning workflow intended for the offline kiosk.{% else %}AniBot runs with Gemma through Ollama on this device, then grounds the answer in local rice and corn standards for newbie farmers working with weak or no internet.{% endif %}</p>
   </div>
 </section>
 
 {% if demo_mode %}
 <section class="demo-notice" aria-label="Temporary judging mode notice">
-  <strong>Temporary Vercel judging mode</strong>
+  <strong>Temporary judging mode</strong>
   <span>Plans are generated for this online demo and are not stored permanently. The final kiosk mode remains offline-first.</span>
 </section>
 {% endif %}
 
-<section class="ollama-panel" aria-label="{% if demo_mode %}Vertex AI judging status{% else %}Ollama connection status{% endif %}">
+<section class="ollama-panel" aria-label="{% if demo_mode %}Vertex AI status{% else %}Ollama connection status{% endif %}">
   <span class="status-dot {% if engine.available %}is-ready{% endif %}" aria-hidden="true"></span>
   <div>
     <h2>{% if demo_mode %}Temporary online AI engine{% else %}Primary local AI engine{% endif %}</h2>
-    <strong>{% if demo_mode %}Judging demo: Gemma via Vertex AI{% else %}Gemma via Ollama: {{ engine.model }}{% endif %}</strong>
+    <strong>{% if demo_mode %}Gemma via Vertex AI{% else %}Gemma via Ollama: {{ engine.model }}{% endif %}</strong>
     <p>{{ engine.message }}</p>
     {% if not engine.available %}
-    <p class="helper">{% if demo_mode %}Set the Vertex AI project and service-account secret before using the judging demo.{% else %}Plan generation requires this local Gemma model. Start Ollama and install the configured model before creating a contest demo plan.{% endif %}</p>
+    <p class="helper">{% if demo_mode %}Set the Vertex AI project and service-account secret before using the online mode.{% else %}Plan generation requires this local Gemma model. Start Ollama and install the configured model before creating a contest demo plan.{% endif %}</p>
     {% endif %}
   </div>
   {% if not demo_mode %}
@@ -41,7 +41,7 @@
     </ol>
     <div class="rail-note">
       <strong>{% if demo_mode %}Demo path{% else %}Primary path{% endif %}</strong>
-      <span>{% if demo_mode %}Gemma through Vertex AI is used only for online judging; validation keeps source-backed safety controls in place.{% else %}Gemma through Ollama is required for plan creation; validation keeps source-backed safety controls in place.{% endif %}</span>
+      <span>{% if demo_mode %}Gemma through Vertex AI is used only for this online mode; validation keeps source-backed safety controls in place.{% else %}Gemma through Ollama is required for plan creation; validation keeps source-backed safety controls in place.{% endif %}</span>
     </div>
   </aside>
 
@@ -150,7 +150,7 @@
       <div class="engine-mode {% if engine.available %}is-ready{% endif %}">
         <span class="status-dot {% if engine.available %}is-ready{% endif %}" aria-hidden="true"></span>
         <div>
-          <strong>{% if engine.available %}Ready: AniBot will ask {{ engine.model }} through {% if demo_mode %}Vertex AI{% else %}Ollama{% endif %}.{% else %}{% if demo_mode %}Vertex AI is required before this judging demo can generate a plan.{% else %}Gemma/Ollama is required before this form can generate a plan.{% endif %}{% endif %}</strong>
+          <strong>{% if engine.available %}Ready: AniBot will ask {{ engine.model }} through {% if demo_mode %}Vertex AI{% else %}Ollama{% endif %}.{% else %}{% if demo_mode %}Vertex AI is required before online mode can generate a plan.{% else %}Gemma/Ollama is required before this form can generate a plan.{% endif %}{% endif %}</strong>
           <p>Every plan is grounded in the local PDF evidence database first. Gemma fills beginner-friendly calendar wording, then AniBot validates the result before {% if demo_mode %}rendering it for this demo session.{% else %}saving it.{% endif %}</p>
         </div>
       </div>
@@ -158,7 +158,7 @@
 
     <div class="submit-row">
       <button class="primary" type="submit" {% if not engine.available %}disabled{% endif %}>Generate farming plan with Gemma</button>
-      <span>{% if demo_mode %}Plans are not stored permanently in online judging mode.{% else %}All data stays on this device.{% endif %}</span>
+      <span>{% if demo_mode %}Plans are not stored permanently in online mode.{% else %}All data stays on this device.{% endif %}</span>
     </div>
   </form>
 

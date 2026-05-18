@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if plan_id %}Farming Plan #{{ plan_id }}{% else %}Judging Demo Farming Plan{% endif %} - AniBot{% endblock %}
+{% block title %}{% if plan_id %}Farming Plan #{{ plan_id }}{% else %}Online Farming Plan{% endif %} - AniBot{% endblock %}
 {% block content %}
 {% set is_fil = plan.language == "filipino" %}
 {% set is_ceb = plan.language == "cebuano" %}
@@ -9,7 +9,7 @@
     <h1>{% if is_ceb %}Plano sa {{ "humay" if plan.crop == "rice" else "mais" }}{% elif is_fil %}Plano sa {{ "palay" if plan.crop == "rice" else "mais" }}{% else %}{{ plan.crop.title() }} farming plan{% endif %}</h1>
     <p>{{ plan.location }} - {{ plan.planning_basis }}</p>
     {% if demo_mode %}
-    <p class="demo-copy">Temporary online judging mode. This plan is rendered for the current demo session and is not stored permanently.</p>
+    <p class="demo-copy">Temporary online mode. This plan is rendered for the current demo session and is not stored permanently.</p>
     {% endif %}
     <div class="plan-actions">
       <button class="print-button" type="button" onclick="window.print()">{% if is_ceb %}I-print ang plano{% elif is_fil %}I-print ang plano{% else %}Print farming plan{% endif %}</button>
@@ -23,7 +23,7 @@
     {% if plan.generation_method == "ollama" %}
     <span>Generated with local Ollama model: {{ plan.llm_model }}</span>
     {% elif plan.generation_method == "vertex" %}
-    <span>Generated with Vertex AI judging model: {{ plan.llm_model }}</span>
+    <span>Generated with Vertex AI model: {{ plan.llm_model }}</span>
     {% elif plan.generation_method == "fallback" %}
     <span>Local LLM fallback used{% if plan.llm_model %}: {{ plan.llm_model }}{% endif %}</span>
     {% else %}

@@ -498,9 +498,11 @@ def test_vercel_judging_form_uses_vertex_demo_copy(monkeypatch) -> None:
 
     assert response.status_code == 200
     html = response.text.lower()
-    assert "judging demo: gemma via vertex ai" in html
-    assert "temporary vercel judging mode" in html
-    assert "plans are not stored permanently in online judging mode" in html
+    assert "gemma via vertex ai" in html
+    assert "temporary judging mode" in html
+    assert "temporary vercel judging mode" not in html
+    assert "plans are not stored permanently in online mode" in html
+    assert "judging demo" not in html
     assert "all data stays on this device" not in html
     assert "recent plans" not in html
 
@@ -594,8 +596,8 @@ def test_vercel_judging_renders_plan_without_persistent_app_db(tmp_path: Path, m
 
     assert response.status_code == 200
     html = response.text
-    assert "Temporary online judging mode" in html
-    assert "Generated with Vertex AI judging model: gemma-4-26b-a4b-it" in html
+    assert "Temporary online mode" in html
+    assert "Generated with Vertex AI model: gemma-4-26b-a4b-it" in html
     assert "Print farming plan" in html
     assert "Sources" in html
     assert not app_db.exists()
