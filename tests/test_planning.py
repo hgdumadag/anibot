@@ -601,6 +601,47 @@ def test_vercel_judging_renders_plan_without_persistent_app_db(tmp_path: Path, m
     assert not app_db.exists()
 
 
+def test_vercel_judging_does_not_use_chroma_dir(tmp_path: Path, monkeypatch) -> None:
+    knowledge_db = _db(tmp_path)
+    captured: dict = {}
+
+    class FakeVertexLlm:
+        generation_method = "vertex"
+        model = "gemma-4-26b-a4b-it"
+
+    def fake_generator(plan_request, knowledge_path, chroma_dir=None, llm_client=None):
+        captured["knowledge_path"] = knowledge_path
+        captured["chroma_dir"] = chroma_dir
+        return generate_farming_plan(plan_request, knowledge_path, chroma_dir=None)
+
+    monkeypatch.setenv("ANIBOT_RUNTIME_MODE", "vercel_judging")
+    monkeypatch.setattr(main_module, "KNOWLEDGE_DB", knowledge_db)
+    monkeypatch.setattr(main_module, "_required_vertex_client", lambda: FakeVertexLlm())
+    monkeypatch.setattr(main_module, "generate_farming_plan", fake_generator)
+
+    client = TestClient(app)
+    response = client.post(
+        "/plans",
+        data={
+            "province": "Nueva Ecija",
+            "municipality": "Munoz",
+            "language": "english",
+            "crop": "rice",
+            "farming_type": "conventional",
+            "planning_mode": "planning_to_plant",
+            "target_planting_date": "June",
+            "water_source": "irrigated",
+            "rice_ecosystem": "lowland",
+            "soil_condition": "moist",
+            "concerns": ["fertilizer_nutrient"],
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["knowledge_path"] == knowledge_db
+    assert captured["chroma_dir"] is None
+
+
 def test_vercel_judging_plan_urls_are_not_persisted(monkeypatch) -> None:
     monkeypatch.setenv("ANIBOT_RUNTIME_MODE", "vercel_judging")
 

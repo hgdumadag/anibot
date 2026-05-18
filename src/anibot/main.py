@@ -100,7 +100,7 @@ def create_plan(
     if _is_vercel_judging_mode():
         try:
             llm_client = _required_vertex_client()
-            plan = generate_farming_plan(plan_request, KNOWLEDGE_DB, DATA_DIR / "chroma", llm_client=llm_client)
+            plan = generate_farming_plan(plan_request, KNOWLEDGE_DB, _chroma_dir(), llm_client=llm_client)
             return templates.TemplateResponse(
                 request,
                 "plan.html",
@@ -120,7 +120,7 @@ def create_plan(
                 detail=f"Vercel judging plan generation failed: {_safe_runtime_error(exc)}",
             ) from exc
     llm_client = _required_ollama_client()
-    plan = generate_farming_plan(plan_request, KNOWLEDGE_DB, DATA_DIR / "chroma", llm_client=llm_client)
+    plan = generate_farming_plan(plan_request, KNOWLEDGE_DB, _chroma_dir(), llm_client=llm_client)
     repo = FarmingPlanRepository(APP_DB)
     try:
         plan_id = repo.save(plan_request, plan)
@@ -193,6 +193,12 @@ def _engine_status():
 
 def _is_vercel_judging_mode() -> bool:
     return os.getenv("ANIBOT_RUNTIME_MODE", "").strip().lower() == VERCEL_JUDGING_MODE
+
+
+def _chroma_dir() -> Path | None:
+    if _is_vercel_judging_mode():
+        return None
+    return DATA_DIR / "chroma"
 
 
 def _required_llm_client():

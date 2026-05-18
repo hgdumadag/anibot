@@ -6,6 +6,7 @@ import sqlite3
 from anibot.rag.ingest import ingest_knowledge
 from anibot.rag.manifest import load_manifest
 from anibot.rag.retriever import require_cited_evidence, retrieve_evidence
+from anibot.rag.store import KnowledgeStore
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -109,3 +110,16 @@ def test_deleted_manifest_document_is_pruned(tmp_path: Path) -> None:
         "pagasa_monthly_agroclimatic_2026_03",
         "bswm_map_guidebook_2024",
     }
+
+
+def test_knowledge_store_can_open_existing_db_readonly(tmp_path: Path) -> None:
+    db_path = tmp_path / "knowledge.db"
+    ingest_knowledge(ROOT, db_path=db_path, chroma_dir=tmp_path / "chroma")
+
+    store = KnowledgeStore(db_path, readonly=True)
+    try:
+        chunks = store.search("soil water", "rice", limit=2)
+    finally:
+        store.close()
+
+    assert chunks

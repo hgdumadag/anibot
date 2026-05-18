@@ -39,7 +39,7 @@ def retrieve_evidence(
             fallback_reason=f"{crop} is not supported in Phase 1. Consult the Municipal Agriculture Office.",
         )
 
-    store = KnowledgeStore(db_path)
+    store = KnowledgeStore(db_path, readonly=True)
     try:
         db_limit = limit * 4 if include_context else limit
         fts_chunks = store.search(query=query, crop=crop, include_context=include_context, limit=db_limit)

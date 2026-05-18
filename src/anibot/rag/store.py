@@ -81,13 +81,18 @@ class StoredChunk:
 
 
 class KnowledgeStore:
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path, readonly: bool = False):
         self.db_path = db_path
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(str(db_path))
+        if readonly:
+            uri = self.db_path.resolve().as_posix()
+            self.conn = sqlite3.connect(f"file:{uri}?mode=ro", uri=True)
+        else:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            self.conn = sqlite3.connect(str(db_path))
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys=ON")
-        self.conn.executescript(SCHEMA)
+        if not readonly:
+            self.conn.executescript(SCHEMA)
 
     def close(self) -> None:
         self.conn.close()
